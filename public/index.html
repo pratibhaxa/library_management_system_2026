@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Library Management System</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    h1, h2 { color: #333; }
+    .section { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+    input, button, select { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+    button { cursor: pointer; background-color: #007BFF; color: white; border: none; }
+    button:hover { background-color: #0056b3; }
+    .hidden { display: none; }
+    ul { list-style-type: none; padding: 0; }
+    li { background: #f9f9f9; margin-bottom: 5px; padding: 10px; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+  <h1>Library Management System</h1>
+
+  <!-- Auth Section -->
+  <div id="authSection" class="section">
+    <h2>Login or Register</h2>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Register as Member</button>
+  </div>
+
+  <!-- Main App Section (Hidden until logged in) -->
+  <div id="appSection" class="hidden">
+    <div>
+      <span id="userInfo"></span>
+      <button onclick="logout()" style="width:auto; margin-left:10px;">Logout</button>
+    </div>
+
+    <!-- Member Section: Search & History -->
+    <div id="memberSection" class="section hidden">
+      <h2>Search Books</h2>
+      <input type="text" id="searchTitle" placeholder="Search by Title..." />
+      <button onclick="searchBooks()">Search</button>
+      <ul id="searchResults"></ul>
+
+      <h2>My Borrowing History</h2>
+      <button onclick="getHistory()">Load History</button>
+      <ul id="historyResults"></ul>
+    </div>
+
+    <!-- Admin Section -->
+    <div id="adminSection" class="section hidden">
+      <h2>Admin: Manage Books</h2>
+      <input type="text" id="newTitle" placeholder="Book Title" />
+      <input type="text" id="newAuthor" placeholder="Author" />
+      <input type="text" id="newISBN" placeholder="ISBN" />
+      <input type="text" id="newCategory" placeholder="Category" />
+      <input type="number" id="newCopies" placeholder="Total Copies" value="1" />
+      <button onclick="addBook()">Add Book</button>
+    </div>
+  </div>
+
+  <script>
+    let token = localStorage.getItem('token') || '';
+    let userRole = localStorage.getItem('role') || '';
+    let username = localStorage.getItem('username') || '';
+
+    function init() {
+      if (token) {
+        document.getElementById('authSection').classList.add('hidden');
+        document.getElementById('appSection').classList.remove('hidden');
+        document.getElementById('userInfo').innerText = `Logged in as: ${username} (${userRole})`;
+
+        if (userRole === 'Admin') {
+          document.getElementById('adminSection').classList.remove('hidden');
+          document.getElementById('memberSection').classList.add('hidden');
+        } else {
+          document.getElementById('memberSection').classList.remove('hidden');
+          document.getElementById('adminSection').classList.add('hidden');
+        }
+      } else {
+        document.getElementById('authSection').classList.remove('hidden');
+        document.getElementById('appSection').classList.add('hidden');
+      }
+    }
+
+    async function login() {
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+      });
+      const data = await res.json();
+      if (data.token) {
+        token = data.token;
+        userRole = data.user.role;
+        username = data.user.username;
+        localStorage.setItem('token', token);
+        localStorage.setItem('role', userRole);
+        localStorage.setItem('username', username);
+        init();
+      } else {
+        alert(data.error);
+      }
+    }
+
+    async function register() {
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p, role: 'Member' })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('Registered successfully. Please login.');
+      } else {
+        alert(data.error);
+      }
+    }
+
+    function logout() {
+      token = ''; userRole = ''; username = '';
+      localStorage.clear();
+      init();
+    }
+
+    // Books
+    async function searchBooks() {
+      const title = document.getElementById('searchTitle').value;
+      const res = await fetch(`/api/books?title=${title}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const ul = document.getElementById('searchResults');
+      ul.innerHTML = '';
+      data.forEach(book => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${book.title}</strong> by ${book.author} | Copies left: ${book.available_copies}/${book.total_copies}
+          <button onclick="borrowBook(${book.id})" style="width:auto; float:right;">Borrow</button>`;
+        ul.appendChild(li);
+      });
+    }
+
+    async function borrowBook(bookId) {
+      const res = await fetch('/api/circulation/borrow', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ book_id: bookId })
+      });
+      const data = await res.json();
+      alert(data.message || data.error);
+      searchBooks(); // refresh list
+    }
+
+    async function getHistory() {
+      const res = await fetch('/api/circulation/history', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const ul = document.getElementById('historyResults');
+      ul.innerHTML = '';
+      data.forEach(item => {
+        const li = document.createElement('li');
+        const status = item.return_date ? `Returned on ${item.return_date}` : `Due by ${item.due_date}`;
+        li.innerHTML = `<strong>${item.title}</strong> | Borrowed: ${item.borrow_date} | ${status}
+        ${!item.return_date ? `<button onclick="returnBook(${item.borrowing_id})" style="width:auto; float:right; background:green;">Return</button>` : ''}`;
+        ul.appendChild(li);
+      });
+    }
+
+    async function returnBook(borrowingId) {
+      const res = await fetch('/api/circulation/return', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ borrowing_id: borrowingId })
+      });
+      const data = await res.json();
+      alert(data.message || data.error);
+      getHistory(); // refresh list
+    }
+
+    // Admin
+    async function addBook() {
+      const title = document.getElementById('newTitle').value;
+      const author = document.getElementById('newAuthor').value;
+      const isbn = document.getElementById('newISBN').value;
+      const category = document.getElementById('newCategory').value;
+      const total_copies = document.getElementById('newCopies').value;
+
+      const res = await fetch('/api/books', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ title, author, isbn, category, total_copies: parseInt(total_copies) })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('Book added successfully');
+      } else {
+        alert(data.error);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
