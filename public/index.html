@@ -2,206 +2,930 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Library Management System</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-    h1, h2 { color: #333; }
-    .section { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
-    input, button, select { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
-    button { cursor: pointer; background-color: #007BFF; color: white; border: none; }
-    button:hover { background-color: #0056b3; }
-    .hidden { display: none; }
-    ul { list-style-type: none; padding: 0; }
-    li { background: #f9f9f9; margin-bottom: 5px; padding: 10px; border: 1px solid #ddd; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Library Systems | Elite Management</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Library Management System</h1>
 
-  <!-- Auth Section -->
-  <div id="authSection" class="section">
-    <h2>Login or Register</h2>
-    <input type="text" id="username" placeholder="Username" />
-    <input type="password" id="password" placeholder="Password" />
-    <button onclick="login()">Login</button>
-    <button onclick="register()">Register as Member</button>
+  <!-- Toast Notification Area -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- AUTH CARD SCREEN -->
+  <div id="authScreen" class="auth-container">
+    <div class="auth-card">
+      <div class="brand-section" style="justify-content: center; margin-bottom: 2rem;">
+        <div class="brand-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 22px; height: 22px; color: white;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+          </svg>
+        </div>
+        <span class="brand-name">NEXUS LIBRARY</span>
+      </div>
+      
+      <header class="view-header" style="text-align: center; margin-bottom: 2rem;">
+        <h1 style="font-size: 1.75rem;">Authentication Portal</h1>
+        <p>Login or create a new library account.</p>
+      </header>
+
+      <div class="form-group">
+        <label for="username">Username</label>
+        <div class="input-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+          </svg>
+          <input type="text" id="username" class="form-input" placeholder="Enter username" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+          </svg>
+          <input type="password" id="password" class="form-input" placeholder="••••••••" required>
+        </div>
+      </div>
+
+      <button onclick="handleLogin()" class="btn" style="width: 100%; margin-top: 1rem; margin-bottom: 1rem;">
+        Access Dashboard
+      </button>
+      
+      <button onclick="handleRegister()" class="btn btn-secondary" style="width: 100%;">
+        Register Member Account
+      </button>
+    </div>
   </div>
 
-  <!-- Main App Section (Hidden until logged in) -->
-  <div id="appSection" class="hidden">
-    <div>
-      <span id="userInfo"></span>
-      <button onclick="logout()" style="width:auto; margin-left:10px;">Logout</button>
-    </div>
+  <!-- MAIN APP PLATFORM -->
+  <div id="appPlatform" class="app-container hidden">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 22px; height: 22px; color: white;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+          </svg>
+        </div>
+        <span class="brand-name">NEXUS</span>
+      </div>
 
-    <!-- Member Section: Search & History -->
-    <div id="memberSection" class="section hidden">
-      <h2>Search Books</h2>
-      <input type="text" id="searchTitle" placeholder="Search by Title..." />
-      <button onclick="searchBooks()">Search</button>
-      <ul id="searchResults"></ul>
+      <!-- User Account Widget -->
+      <div class="user-profile-badge">
+        <div id="userAvatar" class="user-avatar">A</div>
+        <div class="user-details">
+          <span id="navUsername" class="user-name">Loading...</span>
+          <span id="navUserRole" class="user-role">Member</span>
+        </div>
+      </div>
 
-      <h2>My Borrowing History</h2>
-      <button onclick="getHistory()">Load History</button>
-      <ul id="historyResults"></ul>
-    </div>
+      <!-- Nav List -->
+      <nav class="nav-menu">
+        <a id="navLinkDashboard" onclick="switchView('dashboard')" class="nav-link active">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21.75h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21.75h8.25" />
+          </svg>
+          <span class="nav-text">Dashboard</span>
+        </a>
+        <a id="navLinkCatalog" onclick="switchView('catalog')" class="nav-link">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <span class="nav-text">Search & Borrow</span>
+        </a>
+        <a id="navLinkHistory" onclick="switchView('history')" class="nav-link">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="nav-text">My Loans</span>
+        </a>
+        <a id="navLinkAdmin" onclick="switchView('admin')" class="nav-link hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.11v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.383-.764-.78-.93-.398-.164-.854-.142-1.204.108l-.738.527a1.125 1.125 0 01-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.11v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span class="nav-text">Manage Inventory</span>
+        </a>
+      </nav>
 
-    <!-- Admin Section -->
-    <div id="adminSection" class="section hidden">
-      <h2>Admin: Manage Books</h2>
-      <input type="text" id="newTitle" placeholder="Book Title" />
-      <input type="text" id="newAuthor" placeholder="Author" />
-      <input type="text" id="newISBN" placeholder="ISBN" />
-      <input type="text" id="newCategory" placeholder="Category" />
-      <input type="number" id="newCopies" placeholder="Total Copies" value="1" />
-      <button onclick="addBook()">Add Book</button>
-    </div>
+      <a onclick="handleLogout()" class="nav-link logout-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+        </svg>
+        <span class="nav-text">Sign Out</span>
+      </a>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <!-- VIEW 1: DASHBOARD OVERVIEW -->
+      <section id="viewDashboard" class="view-section">
+        <header class="view-header">
+          <h1 id="dashboardWelcome">Welcome to Nexus</h1>
+          <p>Here's what is happening in the library circulation catalog today.</p>
+        </header>
+
+        <!-- Stats Grid -->
+        <div class="grid-stats">
+          <div class="card-stat stat-blue">
+            <div class="stat-icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Total Books</span>
+              <span id="statTotalBooks" class="stat-value">0</span>
+            </div>
+          </div>
+          <div class="card-stat stat-purple">
+            <div class="stat-icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Borrowed Items</span>
+              <span id="statBorrowed" class="stat-value">0</span>
+            </div>
+          </div>
+          <div class="card-stat stat-orange">
+            <div class="stat-icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z" />
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Pending Fines</span>
+              <span id="statFines" class="stat-value">$0.00</span>
+            </div>
+          </div>
+          <div class="card-stat stat-emerald">
+            <div class="stat-icon-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0110 21a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Available Copies</span>
+              <span id="statAvailable" class="stat-value">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Borrowing Activity -->
+        <div class="section-panel">
+          <div class="panel-header">
+            <h2>Recent Activity Logs</h2>
+            <button onclick="switchView('history')" class="btn btn-sm btn-secondary">View All History</button>
+          </div>
+          <div class="table-container">
+            <table class="premium-table">
+              <thead>
+                <tr>
+                  <th>Book Title</th>
+                  <th>Author</th>
+                  <th>Transaction Date</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="dashboardActivityTable">
+                <tr>
+                  <td colspan="5" style="text-align: center; color: var(--text-muted);">Loading activity...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: SEARCH & BORROW CATALOG -->
+      <section id="viewCatalog" class="view-section hidden">
+        <header class="view-header">
+          <h1>Explore Library Catalog</h1>
+          <p>Instant real-time search across the entire physical library book catalog.</p>
+        </header>
+
+        <!-- Filters -->
+        <div class="search-controls">
+          <input type="text" id="catalogSearchTitle" oninput="loadCatalog()" class="form-input input-no-icon" placeholder="Search by Title, Author, or ISBN...">
+          <select id="catalogSearchCategory" onchange="loadCatalog()" class="form-input input-no-icon" style="max-width: 200px;">
+            <option value="">All Categories</option>
+            <option value="Fiction">Fiction</option>
+            <option value="Non-Fiction">Non-Fiction</option>
+            <option value="Science">Science</option>
+            <option value="History">History</option>
+            <option value="Biography">Biography</option>
+          </select>
+        </div>
+
+        <!-- Grid -->
+        <div id="catalogGrid" class="books-grid">
+          <!-- Cards injected dynamically -->
+        </div>
+      </section>
+
+      <!-- VIEW 3: MY LOANS & ACCOUNT HISTORY -->
+      <section id="viewHistory" class="view-section hidden">
+        <header class="view-header">
+          <h1>My Borrowing Ledger</h1>
+          <p>Track your active borrowed books, countdown due dates, return statuses, and late fine metrics.</p>
+        </header>
+
+        <!-- Active Borrowings Panel -->
+        <div class="section-panel" style="margin-bottom: 2.5rem;">
+          <div class="panel-header">
+            <h2>Current Active Loans</h2>
+          </div>
+          <div class="table-container">
+            <table class="premium-table">
+              <thead>
+                <tr>
+                  <th>Book Title</th>
+                  <th>Author</th>
+                  <th>Borrowed On</th>
+                  <th>Due Date</th>
+                  <th>Accumulated Fine</th>
+                  <th style="text-align: right;">Operations</th>
+                </tr>
+              </thead>
+              <tbody id="activeLoansTable">
+                <!-- Injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Past Return History Panel -->
+        <div class="section-panel">
+          <div class="panel-header">
+            <h2>Past Returned Ledger</h2>
+          </div>
+          <div class="table-container">
+            <table class="premium-table">
+              <thead>
+                <tr>
+                  <th>Book Title</th>
+                  <th>Author</th>
+                  <th>Borrowed On</th>
+                  <th>Returned On</th>
+                  <th>Paid Fine</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="pastReturnedTable">
+                <!-- Injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 4: ADMIN CONTROLS (Only visible to admin) -->
+      <section id="viewAdmin" class="view-section hidden">
+        <header class="view-header">
+          <h1>Inventory Management Panel</h1>
+          <p>Create new volumes, modify categories, edit inventory stocks, or delete catalog titles.</p>
+        </header>
+
+        <div class="admin-row">
+          
+          <!-- Inventory Table Panel -->
+          <div class="section-panel" style="margin-bottom: 0;">
+            <div class="panel-header">
+              <h2>Library Book Catalog</h2>
+            </div>
+            <div class="table-container">
+              <table class="premium-table">
+                <thead>
+                  <tr>
+                    <th>Title & Author</th>
+                    <th>ISBN</th>
+                    <th>Category</th>
+                    <th>Available / Total</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="adminInventoryTable">
+                  <!-- Injected dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Add / Edit Form Panel -->
+          <div class="section-panel" style="margin-bottom: 0; align-self: start;">
+            <div class="panel-header">
+              <h2 id="adminFormHeader">Add New Volume</h2>
+            </div>
+
+            <form id="adminBookForm" onsubmit="handleBookSubmit(event)">
+              <input type="hidden" id="adminBookId" value="">
+              
+              <div class="form-group">
+                <label for="bookTitle">Title</label>
+                <input type="text" id="bookTitle" class="form-input input-no-icon" placeholder="Enter book title" required>
+              </div>
+
+              <div class="form-group">
+                <label for="bookAuthor">Author</label>
+                <input type="text" id="bookAuthor" class="form-input input-no-icon" placeholder="Enter author name" required>
+              </div>
+
+              <div class="form-group">
+                <label for="bookISBN">ISBN Number</label>
+                <input type="text" id="bookISBN" class="form-input input-no-icon" placeholder="Enter ISBN-13 barcode" required>
+              </div>
+
+              <div class="form-group">
+                <label for="bookCategory">Category</label>
+                <select id="bookCategory" class="form-input input-no-icon" required>
+                  <option value="Fiction">Fiction</option>
+                  <option value="Non-Fiction">Non-Fiction</option>
+                  <option value="Science">Science</option>
+                  <option value="History">History</option>
+                  <option value="Biography">Biography</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="bookCopies">Total Copies</label>
+                <input type="number" id="bookCopies" class="form-input input-no-icon" value="1" min="1" required>
+              </div>
+
+              <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="submit" id="adminFormSubmitBtn" class="btn" style="flex-grow: 1;">Save Book</button>
+                <button type="button" id="adminFormCancelBtn" onclick="resetAdminForm()" class="btn btn-secondary hidden">Cancel</button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
   </div>
 
+  <!-- CORE JAVASCRIPT APP CONTROLLER -->
   <script>
+    // State Variables
     let token = localStorage.getItem('token') || '';
-    let userRole = localStorage.getItem('role') || '';
+    let role = localStorage.getItem('role') || '';
     let username = localStorage.getItem('username') || '';
 
+    // Glassmorphic Toast Notification Controller
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      
+      let icon = '';
+      if (type === 'success') {
+        icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px; height: 20px; color: var(--success);"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>`;
+      } else if (type === 'error') {
+        icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px; height: 20px; color: var(--danger);"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+      } else {
+        icon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px; height: 20px; color: var(--primary);"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 111.063.852l-.708 2.836a.75.75 0 001.063.852l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>`;
+      }
+
+      toast.innerHTML = `${icon} <span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) reverse forwards';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // App Initialization
     function init() {
       if (token) {
-        document.getElementById('authSection').classList.add('hidden');
-        document.getElementById('appSection').classList.remove('hidden');
-        document.getElementById('userInfo').innerText = `Logged in as: ${username} (${userRole})`;
+        document.getElementById('authScreen').classList.add('hidden');
+        document.getElementById('appPlatform').classList.remove('hidden');
+        
+        // Update user elements
+        document.getElementById('userAvatar').innerText = username.charAt(0).toUpperCase();
+        document.getElementById('navUsername').innerText = username;
+        document.getElementById('navUserRole').innerText = role;
+        document.getElementById('dashboardWelcome').innerText = `Welcome back, ${username}!`;
 
-        if (userRole === 'Admin') {
-          document.getElementById('adminSection').classList.remove('hidden');
-          document.getElementById('memberSection').classList.add('hidden');
+        // Role-based Nav adjustments
+        if (role === 'Admin') {
+          document.getElementById('navLinkAdmin').classList.remove('hidden');
         } else {
-          document.getElementById('memberSection').classList.remove('hidden');
-          document.getElementById('adminSection').classList.add('hidden');
+          document.getElementById('navLinkAdmin').classList.add('hidden');
         }
+
+        // Initialize dashboard state
+        switchView('dashboard');
       } else {
-        document.getElementById('authSection').classList.remove('hidden');
-        document.getElementById('appSection').classList.add('hidden');
+        document.getElementById('authScreen').classList.remove('hidden');
+        document.getElementById('appPlatform').classList.add('hidden');
       }
     }
 
-    async function login() {
-      const u = document.getElementById('username').value;
-      const p = document.getElementById('password').value;
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: u, password: p })
+    // Tab view switcher
+    function switchView(viewName) {
+      const views = ['dashboard', 'catalog', 'history', 'admin'];
+      views.forEach(v => {
+        const elem = document.getElementById(`view${v.charAt(0).toUpperCase() + v.slice(1)}`);
+        const navElem = document.getElementById(`navLink${v.charAt(0).toUpperCase() + v.slice(1)}`);
+        
+        if (v === viewName) {
+          elem.classList.remove('hidden');
+          navElem.classList.add('active');
+        } else {
+          elem.classList.add('hidden');
+          navElem.classList.remove('active');
+        }
       });
-      const data = await res.json();
-      if (data.token) {
-        token = data.token;
-        userRole = data.user.role;
-        username = data.user.username;
-        localStorage.setItem('token', token);
-        localStorage.setItem('role', userRole);
-        localStorage.setItem('username', username);
-        init();
-      } else {
-        alert(data.error);
+
+      // Fetch dynamic view data
+      if (viewName === 'dashboard') {
+        loadDashboardStats();
+      } else if (viewName === 'catalog') {
+        loadCatalog();
+      } else if (viewName === 'history') {
+        loadLedgerHistory();
+      } else if (viewName === 'admin') {
+        loadAdminInventory();
       }
     }
 
-    async function register() {
-      const u = document.getElementById('username').value;
+    // AUTH ACTIONS
+    async function handleLogin() {
+      const u = document.getElementById('username').value.trim();
       const p = document.getElementById('password').value;
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: u, password: p, role: 'Member' })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert('Registered successfully. Please login.');
-      } else {
-        alert(data.error);
+
+      if (!u || !p) {
+        showToast('Username and password are required', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          token = data.token;
+          role = data.user.role;
+          username = data.user.username;
+          localStorage.setItem('token', token);
+          localStorage.setItem('role', role);
+          localStorage.setItem('username', username);
+          
+          showToast('Dashboard authentication successful', 'success');
+          init();
+        } else {
+          showToast(data.error || 'Authentication failed', 'error');
+        }
+      } catch (err) {
+        showToast('Network error during auth. Express server down?', 'error');
       }
     }
 
-    function logout() {
-      token = ''; userRole = ''; username = '';
+    async function handleRegister() {
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value;
+
+      if (!u || !p) {
+        showToast('Username and password are required', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p, role: 'Member' })
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          showToast('Registration successful! Access using your new account.', 'success');
+        } else {
+          showToast(data.error || 'Registration failed', 'error');
+        }
+      } catch (err) {
+        showToast('Network error during registration', 'error');
+      }
+    }
+
+    function handleLogout() {
+      token = ''; role = ''; username = '';
       localStorage.clear();
+      showToast('Session signed out successfully', 'info');
       init();
     }
 
-    // Books
-    async function searchBooks() {
-      const title = document.getElementById('searchTitle').value;
-      const res = await fetch(`/api/books?title=${title}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      const ul = document.getElementById('searchResults');
-      ul.innerHTML = '';
-      data.forEach(book => {
-        const li = document.createElement('li');
-        li.innerHTML = `<strong>${book.title}</strong> by ${book.author} | Copies left: ${book.available_copies}/${book.total_copies}
-          <button onclick="borrowBook(${book.id})" style="width:auto; float:right;">Borrow</button>`;
-        ul.appendChild(li);
-      });
-    }
+    // DASHBOARD VIEWS LOGIC
+    async function loadDashboardStats() {
+      try {
+        const response = await fetch('/api/books', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const books = await response.json();
 
-    async function borrowBook(bookId) {
-      const res = await fetch('/api/circulation/borrow', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ book_id: bookId })
-      });
-      const data = await res.json();
-      alert(data.message || data.error);
-      searchBooks(); // refresh list
-    }
+        const historyResponse = await fetch('/api/circulation/history', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const loans = await historyResponse.json();
 
-    async function getHistory() {
-      const res = await fetch('/api/circulation/history', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      const ul = document.getElementById('historyResults');
-      ul.innerHTML = '';
-      data.forEach(item => {
-        const li = document.createElement('li');
-        const status = item.return_date ? `Returned on ${item.return_date}` : `Due by ${item.due_date}`;
-        li.innerHTML = `<strong>${item.title}</strong> | Borrowed: ${item.borrow_date} | ${status}
-        ${!item.return_date ? `<button onclick="returnBook(${item.borrowing_id})" style="width:auto; float:right; background:green;">Return</button>` : ''}`;
-        ul.appendChild(li);
-      });
-    }
+        if (response.ok && historyResponse.ok) {
+          const totalBooks = books.reduce((acc, b) => acc + (b.total_copies || 0), 0);
+          const availableBooks = books.reduce((acc, b) => acc + (b.available_copies || 0), 0);
+          const activeLoans = loans.filter(l => l.return_date === null);
+          const totalFine = loans.reduce((acc, l) => acc + (l.fine_amount || 0), 0);
 
-    async function returnBook(borrowingId) {
-      const res = await fetch('/api/circulation/return', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ borrowing_id: borrowingId })
-      });
-      const data = await res.json();
-      alert(data.message || data.error);
-      getHistory(); // refresh list
-    }
+          document.getElementById('statTotalBooks').innerText = totalBooks;
+          document.getElementById('statBorrowed').innerText = activeLoans.length;
+          document.getElementById('statFines').innerText = `$${totalFine.toFixed(2)}`;
+          document.getElementById('statAvailable').innerText = availableBooks;
 
-    // Admin
-    async function addBook() {
-      const title = document.getElementById('newTitle').value;
-      const author = document.getElementById('newAuthor').value;
-      const isbn = document.getElementById('newISBN').value;
-      const category = document.getElementById('newCategory').value;
-      const total_copies = document.getElementById('newCopies').value;
+          // Render dashboard recent activity table
+          const dashboardActivityTable = document.getElementById('dashboardActivityTable');
+          dashboardActivityTable.innerHTML = '';
 
-      const res = await fetch('/api/books', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ title, author, isbn, category, total_copies: parseInt(total_copies) })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert('Book added successfully');
-      } else {
-        alert(data.error);
+          const displayHistory = loans.slice(0, 5);
+          if (displayHistory.length === 0) {
+            dashboardActivityTable.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No activity logs found. Try borrowing a book in "Search & Borrow".</td></tr>`;
+            return;
+          }
+
+          displayHistory.forEach(item => {
+            const tr = document.createElement('tr');
+            const statusBadge = item.return_date 
+              ? `<span class="badge badge-success">Returned</span>` 
+              : `<span class="badge badge-warning">Active Loan</span>`;
+            
+            const actionButton = item.return_date 
+              ? `<span style="color: var(--text-muted); font-size: 0.85rem;">Completed</span>`
+              : `<button onclick="directReturn(${item.borrowing_id})" class="btn btn-sm btn-secondary">Return</button>`;
+
+            const formattedDate = new Date(item.borrow_date).toLocaleDateString(undefined, {
+              month: 'short', day: 'numeric', year: 'numeric'
+            });
+
+            tr.innerHTML = `
+              <td><strong>${escapeHtml(item.title)}</strong></td>
+              <td>${escapeHtml(item.author)}</td>
+              <td>${formattedDate}</td>
+              <td>${statusBadge}</td>
+              <td style="text-align: right;">${actionButton}</td>
+            `;
+            dashboardActivityTable.appendChild(tr);
+          });
+        }
+      } catch (err) {
+        showToast('Error loading stats from server', 'error');
       }
     }
 
+    // Helper to escape HTML tags
+    function escapeHtml(unsafe) {
+      if (!unsafe) return '';
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // SEARCH & BORROW CATALOG LOGIC
+    async function loadCatalog() {
+      const searchVal = document.getElementById('catalogSearchTitle').value;
+      const categoryVal = document.getElementById('catalogSearchCategory').value;
+
+      let url = '/api/books';
+      const params = [];
+      if (searchVal) params.push(`title=${encodeURIComponent(searchVal)}`);
+      if (categoryVal) params.push(`category=${encodeURIComponent(categoryVal)}`);
+      if (params.length > 0) url += `?${params.join('&')}`;
+
+      try {
+        const response = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const books = await response.json();
+
+        const grid = document.getElementById('catalogGrid');
+        grid.innerHTML = '';
+
+        if (books.length === 0) {
+          grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 4rem 0; color: var(--text-muted);">
+            No titles match your query. Try searching for something else or ask your administrator to add a book!
+          </div>`;
+          return;
+        }
+
+        books.forEach(book => {
+          const card = document.createElement('div');
+          card.className = 'book-card';
+          
+          const statusBadge = book.available_copies > 0 
+            ? `<span class="badge badge-success">Available</span>`
+            : `<span class="badge badge-danger">Out of Stock</span>`;
+
+          const borrowBtn = book.available_copies > 0
+            ? `<button onclick="handleBorrowBook(${book.id})" class="btn btn-sm">Borrow Book</button>`
+            : `<button class="btn btn-sm btn-secondary" disabled style="cursor: not-allowed; opacity: 0.5;">Out of Stock</button>`;
+
+          card.innerHTML = `
+            <div class="book-meta">
+              <span class="book-category">${escapeHtml(book.category || 'General')}</span>
+              <h3 class="book-title">${escapeHtml(book.title)}</h3>
+              <span class="book-author">by ${escapeHtml(book.author)}</span>
+            </div>
+            <div class="book-stats">
+              <span>ISBN: ${escapeHtml(book.isbn)}</span>
+              <span>${statusBadge}</span>
+            </div>
+            <div class="book-footer">
+              <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-secondary);">
+                In stock: <strong>${book.available_copies} / ${book.total_copies}</strong>
+              </span>
+              ${borrowBtn}
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      } catch (err) {
+        showToast('Error loading books catalog', 'error');
+      }
+    }
+
+    async function handleBorrowBook(bookId) {
+      try {
+        const response = await fetch('/api/circulation/borrow', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ book_id: bookId })
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          showToast('Book borrowed successfully!', 'success');
+          loadCatalog(); // Refresh list immediately
+        } else {
+          showToast(data.error || 'Could not borrow book', 'error');
+        }
+      } catch (err) {
+        showToast('Circulation server error', 'error');
+      }
+    }
+
+    // MY LOANS & ACCOUNT HISTORY
+    async function loadLedgerHistory() {
+      try {
+        const response = await fetch('/api/circulation/history', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        const activeTable = document.getElementById('activeLoansTable');
+        const pastTable = document.getElementById('pastReturnedTable');
+        activeTable.innerHTML = '';
+        pastTable.innerHTML = '';
+
+        const activeLoans = data.filter(item => item.return_date === null);
+        const pastReturned = data.filter(item => item.return_date !== null);
+
+        // Active Loans
+        if (activeLoans.length === 0) {
+          activeTable.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No active borrowings currently recorded on your ledger.</td></tr>`;
+        } else {
+          activeLoans.forEach(item => {
+            const tr = document.createElement('tr');
+            const borrowDate = new Date(item.borrow_date).toLocaleDateString();
+            const dueDate = new Date(item.due_date);
+            const isOverdue = new Date() > dueDate;
+            
+            const dueDateText = isOverdue
+              ? `<span style="color: var(--danger); font-weight: 600;">${dueDate.toLocaleDateString()} (Overdue)</span>`
+              : `<span>${dueDate.toLocaleDateString()}</span>`;
+
+            const fineVal = item.fine_amount || 0;
+            const fineText = fineVal > 0 
+              ? `<span style="color: var(--danger); font-weight: 600;">$${fineVal.toFixed(2)}</span>`
+              : `<span style="color: var(--success);">$0.00</span>`;
+
+            tr.innerHTML = `
+              <td><strong>${escapeHtml(item.title)}</strong></td>
+              <td>${escapeHtml(item.author)}</td>
+              <td>${borrowDate}</td>
+              <td>${dueDateText}</td>
+              <td>${fineText}</td>
+              <td style="text-align: right;">
+                <button onclick="handleReturnBook(${item.borrowing_id})" class="btn btn-sm btn-secondary" style="border-color: rgba(16, 185, 129, 0.4); color: var(--success);">Return Book</button>
+              </td>
+            `;
+            activeTable.appendChild(tr);
+          });
+        }
+
+        // Past Returned
+        if (pastReturned.length === 0) {
+          pastTable.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No past returned books records found.</td></tr>`;
+        } else {
+          pastReturned.forEach(item => {
+            const tr = document.createElement('tr');
+            const borrowDate = new Date(item.borrow_date).toLocaleDateString();
+            const returnDate = new Date(item.return_date).toLocaleDateString();
+            
+            const fineVal = item.fine_amount || 0;
+            const fineText = fineVal > 0 
+              ? `<span style="color: var(--warning);">$${fineVal.toFixed(2)}</span>`
+              : `<span>$0.00</span>`;
+
+            tr.innerHTML = `
+              <td><strong>${escapeHtml(item.title)}</strong></td>
+              <td>${escapeHtml(item.author)}</td>
+              <td>${borrowDate}</td>
+              <td>${returnDate}</td>
+              <td>${fineText}</td>
+              <td><span class="badge badge-success">Returned</span></td>
+            `;
+            pastTable.appendChild(tr);
+          });
+        }
+      } catch (err) {
+        showToast('Error loading circulation ledger', 'error');
+      }
+    }
+
+    async function handleReturnBook(borrowingId) {
+      try {
+        const response = await fetch('/api/circulation/return', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ borrowing_id: borrowingId })
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          if (data.fine_amount > 0) {
+            showToast(`Book returned. Late fine incurred: $${data.fine_amount.toFixed(2)}`, 'warning');
+          } else {
+            showToast('Book returned on time! Thank you.', 'success');
+          }
+          loadLedgerHistory(); // Refresh history tab
+        } else {
+          showToast(data.error || 'Could not return book', 'error');
+        }
+      } catch (err) {
+        showToast('Returned validation failed', 'error');
+      }
+    }
+
+    async function directReturn(borrowingId) {
+      await handleReturnBook(borrowingId);
+      loadDashboardStats(); // Refresh dashboard list
+    }
+
+    // ADMIN INVENTORY MANAGEMENT
+    async function loadAdminInventory() {
+      try {
+        const response = await fetch('/api/books', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const books = await response.json();
+
+        const tableBody = document.getElementById('adminInventoryTable');
+        tableBody.innerHTML = '';
+
+        if (books.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No inventory records. Create a book on the right!</td></tr>`;
+          return;
+        }
+
+        books.forEach(book => {
+          const tr = document.createElement('tr');
+          
+          tr.innerHTML = `
+            <td>
+              <div style="font-weight: 600; color: white;">${escapeHtml(book.title)}</div>
+              <div style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(book.author)}</div>
+            </td>
+            <td><code>${escapeHtml(book.isbn)}</code></td>
+            <td><span class="badge badge-info">${escapeHtml(book.category)}</span></td>
+            <td><strong>${book.available_copies}</strong> / ${book.total_copies}</td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button onclick="editBookInForm(${JSON.stringify(book).replace(/"/g, '&quot;')})" class="btn btn-sm btn-secondary" style="margin-right: 0.5rem; border-color: rgba(99, 102, 241, 0.3); color: var(--primary);">Edit</button>
+              <button onclick="handleDeleteBook(${book.id})" class="btn btn-sm btn-outline-danger">Delete</button>
+            </td>
+          `;
+          tableBody.appendChild(tr);
+        });
+      } catch (err) {
+        showToast('Error fetching inventory catalog', 'error');
+      }
+    }
+
+    async function handleBookSubmit(event) {
+      event.preventDefault();
+      
+      const id = document.getElementById('adminBookId').value;
+      const title = document.getElementById('bookTitle').value.trim();
+      const author = document.getElementById('bookAuthor').value.trim();
+      const isbn = document.getElementById('bookISBN').value.trim();
+      const category = document.getElementById('bookCategory').value;
+      const total_copies = parseInt(document.getElementById('bookCopies').value);
+
+      if (!title || !author || !isbn) {
+        showToast('Required fields must be completed', 'error');
+        return;
+      }
+
+      const body = { title, author, isbn, category, total_copies };
+      const isEdit = id !== '';
+
+      const url = isEdit ? `/api/books/${id}` : '/api/books';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(body)
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          showToast(isEdit ? 'Book settings updated' : 'Book added to catalog', 'success');
+          resetAdminForm();
+          loadAdminInventory();
+        } else {
+          showToast(data.error || 'Save operation failed', 'error');
+        }
+      } catch (err) {
+        showToast('Server update transaction error', 'error');
+      }
+    }
+
+    async function handleDeleteBook(id) {
+      if (!confirm('Are you absolutely sure you want to delete this volume from the catalog?')) return;
+
+      try {
+        const response = await fetch(`/api/books/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          showToast('Book deleted from inventory', 'success');
+          loadAdminInventory();
+        } else {
+          showToast(data.error || 'Delete validation failed', 'error');
+        }
+      } catch (err) {
+        showToast('Inventory delete request error', 'error');
+      }
+    }
+
+    // Edit binder
+    function editBookInForm(book) {
+      document.getElementById('adminBookId').value = book.id;
+      document.getElementById('bookTitle').value = book.title;
+      document.getElementById('bookAuthor').value = book.author;
+      document.getElementById('bookISBN').value = book.isbn;
+      document.getElementById('bookCategory').value = book.category;
+      document.getElementById('bookCopies').value = book.total_copies;
+
+      // Update Form Titles & Buttons
+      document.getElementById('adminFormHeader').innerText = 'Modify Book Properties';
+      document.getElementById('adminFormSubmitBtn').innerText = 'Update Book';
+      document.getElementById('adminFormCancelBtn').classList.remove('hidden');
+    }
+
+    function resetAdminForm() {
+      document.getElementById('adminBookId').value = '';
+      document.getElementById('adminBookForm').reset();
+      
+      document.getElementById('adminFormHeader').innerText = 'Add New Volume';
+      document.getElementById('adminFormSubmitBtn').innerText = 'Save Book';
+      document.getElementById('adminFormCancelBtn').classList.add('hidden');
+    }
+
+    // Launch Initialization
     init();
   </script>
 </body>
