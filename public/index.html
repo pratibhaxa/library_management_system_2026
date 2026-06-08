@@ -52,8 +52,12 @@
         Access Dashboard
       </button>
       
-      <button onclick="handleRegister()" class="btn btn-secondary" style="width: 100%;">
+      <button onclick="handleRegister()" class="btn btn-secondary" style="width: 100%; margin-bottom: 1rem;">
         Register Member Account
+      </button>
+
+      <button onclick="handleDemoLogin()" class="btn btn-secondary" style="width: 100%; border-color: rgba(99, 102, 241, 0.4); color: var(--primary);">
+        Quick Demo Login (Admin Access)
       </button>
     </div>
   </div>
@@ -372,10 +376,103 @@
 
   <!-- CORE JAVASCRIPT APP CONTROLLER -->
   <script>
+    // Constants for Library Business Logic
+    const FINE_RATE_PER_DAY = 0.50;
+    const MAX_BORROW_LIMIT = 3;
+    const BORROW_DAYS = 14;
+
+    // Helper functions for Database access in LocalStorage
+    function getLocalStorageItem(key, defaultValue) {
+      const val = localStorage.getItem(key);
+      return val ? JSON.parse(val) : defaultValue;
+    }
+
+    function setLocalStorageItem(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    // Seed mock data if not initialized
+    function seedDatabaseIfNeeded() {
+      const users = getLocalStorageItem('nexus_users', null);
+      const books = getLocalStorageItem('nexus_books', null);
+      const borrowings = getLocalStorageItem('nexus_borrowings', null);
+
+      if (!users) {
+        const initialUsers = [
+          { id: 1, username: 'admin', password: 'admin123', role: 'Admin' },
+          { id: 2, username: 'librarian', password: 'librarian123', role: 'Admin' },
+          { id: 3, username: 'john_doe', password: 'member123', role: 'Member' },
+          { id: 4, username: 'jane_smith', password: 'member123', role: 'Member' },
+          { id: 5, username: 'alice_jones', password: 'member123', role: 'Member' }
+        ];
+        setLocalStorageItem('nexus_users', initialUsers);
+      }
+
+      if (!books) {
+        const initialBooks = [
+          { id: 1, title: "To Kill a Mockingbird", author: "Harper Lee", isbn: "9780061120084", category: "Fiction", total_copies: 5, available_copies: 5 },
+          { id: 2, title: "1984", author: "George Orwell", isbn: "9780451524935", category: "Fiction", total_copies: 4, available_copies: 3 },
+          { id: 3, title: "A Brief History of Time", author: "Stephen Hawking", isbn: "9780553380163", category: "Science", total_copies: 3, available_copies: 3 },
+          { id: 4, title: "The Great Gatsby", author: "F. Scott Fitzgerald", isbn: "9780743273565", category: "Fiction", total_copies: 3, available_copies: 2 },
+          { id: 5, title: "Sapiens: A Brief History of Humankind", author: "Yuval Noah Harari", isbn: "9780062316097", category: "History", total_copies: 4, available_copies: 4 },
+          { id: 6, title: "Clean Code", author: "Robert C. Martin", isbn: "9780132350884", category: "Technology", total_copies: 6, available_copies: 5 },
+          { id: 7, title: "The Hobbit", author: "J.R.R. Tolkien", isbn: "9780547928227", category: "Fiction", total_copies: 5, available_copies: 5 },
+          { id: 8, title: "Educated", author: "Tara Westover", isbn: "9780399590504", category: "Biography", total_copies: 3, available_copies: 3 },
+          { id: 9, title: "The Selfish Gene", author: "Richard Dawkins", isbn: "9780198788607", category: "Science", total_copies: 2, available_copies: 2 },
+          { id: 10, title: "Steve Jobs", author: "Walter Isaacson", isbn: "9781451648539", category: "Biography", total_copies: 3, available_copies: 3 }
+        ];
+        setLocalStorageItem('nexus_books', initialBooks);
+      }
+
+      if (!borrowings) {
+        const now = new Date();
+
+        const date1_borrow = new Date(); date1_borrow.setDate(now.getDate() - 5);
+        const date1_due = new Date(); date1_due.setDate(now.getDate() + 9);
+
+        const date2_borrow = new Date(); date2_borrow.setDate(now.getDate() - 12);
+        const date2_due = new Date(); date2_due.setDate(now.getDate() + 2);
+
+        const date3_borrow = new Date(); date3_borrow.setDate(now.getDate() - 20);
+        const date3_due = new Date(); date3_due.setDate(now.getDate() - 6);
+
+        const date4_borrow = new Date(); date4_borrow.setDate(now.getDate() - 15);
+        const date4_due = new Date(); date4_due.setDate(now.getDate() - 1);
+        const date4_return = new Date(); date4_return.setDate(now.getDate() - 1);
+
+        const initialBorrowings = [
+          { id: 1, user_id: 3, book_id: 6, borrow_date: date1_borrow.toISOString(), due_date: date1_due.toISOString(), return_date: null, fine_amount: 0 },
+          { id: 2, user_id: 4, book_id: 2, borrow_date: date2_borrow.toISOString(), due_date: date2_due.toISOString(), return_date: null, fine_amount: 0 },
+          { id: 3, user_id: 5, book_id: 4, borrow_date: date3_borrow.toISOString(), due_date: date3_due.toISOString(), return_date: null, fine_amount: 0 },
+          { id: 4, user_id: 3, book_id: 7, borrow_date: date4_borrow.toISOString(), due_date: date4_due.toISOString(), return_date: date4_return.toISOString(), fine_amount: 0 }
+        ];
+        setLocalStorageItem('nexus_borrowings', initialBorrowings);
+      }
+    }
+
+    // Call seed data immediately
+    seedDatabaseIfNeeded();
+
     // State Variables
-    let token = localStorage.getItem('token') || '';
-    let role = localStorage.getItem('role') || '';
-    let username = localStorage.getItem('username') || '';
+    let loggedInUser = getLocalStorageItem('nexus_logged_in_user', null);
+    let token = loggedInUser ? 'mock-jwt-token' : '';
+    let role = loggedInUser ? loggedInUser.role : '';
+    let username = loggedInUser ? loggedInUser.username : '';
+
+    // Calculate active fines dynamically on retrieve
+    function calculateFine(borrowing) {
+      if (borrowing.return_date) {
+        return borrowing.fine_amount || 0;
+      }
+      const now = new Date();
+      const dueDate = new Date(borrowing.due_date);
+      if (now > dueDate) {
+        const diffTime = Math.abs(now - dueDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays * FINE_RATE_PER_DAY;
+      }
+      return 0;
+    }
 
     // Glassmorphic Toast Notification Controller
     function showToast(message, type = 'info') {
@@ -457,7 +554,23 @@
     }
 
     // AUTH ACTIONS
-    async function handleLogin() {
+    function handleDemoLogin() {
+      const users = getLocalStorageItem('nexus_users', []);
+      const adminUser = users.find(x => x.username === 'admin') || {
+        id: 1, username: 'admin', password: 'admin123', role: 'Admin'
+      };
+      
+      loggedInUser = adminUser;
+      token = 'mock-jwt-token';
+      role = adminUser.role;
+      username = adminUser.username;
+
+      setLocalStorageItem('nexus_logged_in_user', adminUser);
+      showToast('Logged in successfully as Demo Admin', 'success');
+      init();
+    }
+
+    function handleLogin() {
       const u = document.getElementById('username').value.trim();
       const p = document.getElementById('password').value;
 
@@ -466,33 +579,24 @@
         return;
       }
 
-      try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: u, password: p })
-        });
-        const data = await response.json();
+      const users = getLocalStorageItem('nexus_users', []);
+      const user = users.find(x => x.username === u && x.password === p);
 
-        if (response.ok) {
-          token = data.token;
-          role = data.user.role;
-          username = data.user.username;
-          localStorage.setItem('token', token);
-          localStorage.setItem('role', role);
-          localStorage.setItem('username', username);
-          
-          showToast('Dashboard authentication successful', 'success');
-          init();
-        } else {
-          showToast(data.error || 'Authentication failed', 'error');
-        }
-      } catch (err) {
-        showToast('Network error during auth. Express server down?', 'error');
+      if (user) {
+        loggedInUser = user;
+        token = 'mock-jwt-token';
+        role = user.role;
+        username = user.username;
+
+        setLocalStorageItem('nexus_logged_in_user', user);
+        showToast('Dashboard authentication successful', 'success');
+        init();
+      } else {
+        showToast('Invalid username or password', 'error');
       }
     }
 
-    async function handleRegister() {
+    function handleRegister() {
       const u = document.getElementById('username').value.trim();
       const p = document.getElementById('password').value;
 
@@ -501,98 +605,102 @@
         return;
       }
 
-      try {
-        const response = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: u, password: p, role: 'Member' })
-        });
-        const data = await response.json();
-
-        if (response.ok) {
-          showToast('Registration successful! Access using your new account.', 'success');
-        } else {
-          showToast(data.error || 'Registration failed', 'error');
-        }
-      } catch (err) {
-        showToast('Network error during registration', 'error');
+      const users = getLocalStorageItem('nexus_users', []);
+      if (users.some(x => x.username === u)) {
+        showToast('Username already exists', 'error');
+        return;
       }
+
+      const newUser = {
+        id: users.length ? Math.max(...users.map(x => x.id)) + 1 : 1,
+        username: u,
+        password: p,
+        role: 'Member'
+      };
+
+      users.push(newUser);
+      setLocalStorageItem('nexus_users', users);
+      showToast('Registration successful! Access using your new account.', 'success');
     }
 
     function handleLogout() {
       token = ''; role = ''; username = '';
-      localStorage.clear();
+      loggedInUser = null;
+      localStorage.removeItem('nexus_logged_in_user');
       showToast('Session signed out successfully', 'info');
       init();
     }
 
     // DASHBOARD VIEWS LOGIC
-    async function loadDashboardStats() {
-      try {
-        const response = await fetch('/api/books', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const books = await response.json();
+    function loadDashboardStats() {
+      const books = getLocalStorageItem('nexus_books', []);
+      const borrowings = getLocalStorageItem('nexus_borrowings', []);
 
-        const historyResponse = await fetch('/api/circulation/history', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const loans = await historyResponse.json();
+      const totalBooks = books.reduce((acc, b) => acc + (b.total_copies || 0), 0);
+      const availableBooks = books.reduce((acc, b) => acc + (b.available_copies || 0), 0);
+      
+      // Filter borrowing records belonging to the currently logged in user
+      const userBorrowings = borrowings.filter(l => l.user_id === loggedInUser.id);
+      const activeLoans = userBorrowings.filter(l => l.return_date === null);
+      
+      const totalFine = userBorrowings.reduce((acc, l) => acc + calculateFine(l), 0);
 
-        if (response.ok && historyResponse.ok) {
-          const totalBooks = books.reduce((acc, b) => acc + (b.total_copies || 0), 0);
-          const availableBooks = books.reduce((acc, b) => acc + (b.available_copies || 0), 0);
-          const activeLoans = loans.filter(l => l.return_date === null);
-          const totalFine = loans.reduce((acc, l) => acc + (l.fine_amount || 0), 0);
+      document.getElementById('statTotalBooks').innerText = totalBooks;
+      document.getElementById('statBorrowed').innerText = activeLoans.length;
+      document.getElementById('statFines').innerText = `$${totalFine.toFixed(2)}`;
+      document.getElementById('statAvailable').innerText = availableBooks;
 
-          document.getElementById('statTotalBooks').innerText = totalBooks;
-          document.getElementById('statBorrowed').innerText = activeLoans.length;
-          document.getElementById('statFines').innerText = `$${totalFine.toFixed(2)}`;
-          document.getElementById('statAvailable').innerText = availableBooks;
+      // Render dashboard recent activity table
+      const dashboardActivityTable = document.getElementById('dashboardActivityTable');
+      dashboardActivityTable.innerHTML = '';
 
-          // Render dashboard recent activity table
-          const dashboardActivityTable = document.getElementById('dashboardActivityTable');
-          dashboardActivityTable.innerHTML = '';
+      const joinedHistory = userBorrowings.map(b => {
+        const book = books.find(bk => bk.id === b.book_id) || { title: 'Unknown', author: 'Unknown' };
+        return {
+          borrowing_id: b.id,
+          title: book.title,
+          author: book.author,
+          borrow_date: b.borrow_date,
+          return_date: b.return_date
+        };
+      });
 
-          const displayHistory = loans.slice(0, 5);
-          if (displayHistory.length === 0) {
-            dashboardActivityTable.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No activity logs found. Try borrowing a book in "Search & Borrow".</td></tr>`;
-            return;
-          }
-
-          displayHistory.forEach(item => {
-            const tr = document.createElement('tr');
-            const statusBadge = item.return_date 
-              ? `<span class="badge badge-success">Returned</span>` 
-              : `<span class="badge badge-warning">Active Loan</span>`;
-            
-            const actionButton = item.return_date 
-              ? `<span style="color: var(--text-muted); font-size: 0.85rem;">Completed</span>`
-              : `<button onclick="directReturn(${item.borrowing_id})" class="btn btn-sm btn-secondary">Return</button>`;
-
-            const formattedDate = new Date(item.borrow_date).toLocaleDateString(undefined, {
-              month: 'short', day: 'numeric', year: 'numeric'
-            });
-
-            tr.innerHTML = `
-              <td><strong>${escapeHtml(item.title)}</strong></td>
-              <td>${escapeHtml(item.author)}</td>
-              <td>${formattedDate}</td>
-              <td>${statusBadge}</td>
-              <td style="text-align: right;">${actionButton}</td>
-            `;
-            dashboardActivityTable.appendChild(tr);
-          });
-        }
-      } catch (err) {
-        showToast('Error loading stats from server', 'error');
+      const displayHistory = joinedHistory.slice(0, 5);
+      if (displayHistory.length === 0) {
+        dashboardActivityTable.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No activity logs found. Try borrowing a book in "Search & Borrow".</td></tr>`;
+        return;
       }
+
+      displayHistory.forEach(item => {
+        const tr = document.createElement('tr');
+        const statusBadge = item.return_date 
+          ? `<span class="badge badge-success">Returned</span>` 
+          : `<span class="badge badge-warning">Active Loan</span>`;
+        
+        const actionButton = item.return_date 
+          ? `<span style="color: var(--text-muted); font-size: 0.85rem;">Completed</span>`
+          : `<button onclick="directReturn(${item.borrowing_id})" class="btn btn-sm btn-secondary">Return</button>`;
+
+        const formattedDate = new Date(item.borrow_date).toLocaleDateString(undefined, {
+          month: 'short', day: 'numeric', year: 'numeric'
+        });
+
+        tr.innerHTML = `
+          <td><strong>${escapeHtml(item.title)}</strong></td>
+          <td>${escapeHtml(item.author)}</td>
+          <td>${formattedDate}</td>
+          <td>${statusBadge}</td>
+          <td style="text-align: right;">${actionButton}</td>
+        `;
+        dashboardActivityTable.appendChild(tr);
+      });
     }
 
     // Helper to escape HTML tags
     function escapeHtml(unsafe) {
       if (!unsafe) return '';
       return unsafe
+        .toString()
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -601,242 +709,281 @@
     }
 
     // SEARCH & BORROW CATALOG LOGIC
-    async function loadCatalog() {
-      const searchVal = document.getElementById('catalogSearchTitle').value;
+    function loadCatalog() {
+      const searchVal = document.getElementById('catalogSearchTitle').value.toLowerCase().trim();
       const categoryVal = document.getElementById('catalogSearchCategory').value;
 
-      let url = '/api/books';
-      const params = [];
-      if (searchVal) params.push(`title=${encodeURIComponent(searchVal)}`);
-      if (categoryVal) params.push(`category=${encodeURIComponent(categoryVal)}`);
-      if (params.length > 0) url += `?${params.join('&')}`;
+      let books = getLocalStorageItem('nexus_books', []);
 
-      try {
-        const response = await fetch(url, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const books = await response.json();
-
-        const grid = document.getElementById('catalogGrid');
-        grid.innerHTML = '';
-
-        if (books.length === 0) {
-          grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 4rem 0; color: var(--text-muted);">
-            No titles match your query. Try searching for something else or ask your administrator to add a book!
-          </div>`;
-          return;
-        }
-
-        books.forEach(book => {
-          const card = document.createElement('div');
-          card.className = 'book-card';
-          
-          const statusBadge = book.available_copies > 0 
-            ? `<span class="badge badge-success">Available</span>`
-            : `<span class="badge badge-danger">Out of Stock</span>`;
-
-          const borrowBtn = book.available_copies > 0
-            ? `<button onclick="handleBorrowBook(${book.id})" class="btn btn-sm">Borrow Book</button>`
-            : `<button class="btn btn-sm btn-secondary" disabled style="cursor: not-allowed; opacity: 0.5;">Out of Stock</button>`;
-
-          card.innerHTML = `
-            <div class="book-meta">
-              <span class="book-category">${escapeHtml(book.category || 'General')}</span>
-              <h3 class="book-title">${escapeHtml(book.title)}</h3>
-              <span class="book-author">by ${escapeHtml(book.author)}</span>
-            </div>
-            <div class="book-stats">
-              <span>ISBN: ${escapeHtml(book.isbn)}</span>
-              <span>${statusBadge}</span>
-            </div>
-            <div class="book-footer">
-              <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-secondary);">
-                In stock: <strong>${book.available_copies} / ${book.total_copies}</strong>
-              </span>
-              ${borrowBtn}
-            </div>
-          `;
-          grid.appendChild(card);
-        });
-      } catch (err) {
-        showToast('Error loading books catalog', 'error');
+      if (searchVal) {
+        books = books.filter(b => 
+          b.title.toLowerCase().includes(searchVal) || 
+          b.author.toLowerCase().includes(searchVal) || 
+          b.isbn.toLowerCase().includes(searchVal)
+        );
       }
+
+      if (categoryVal) {
+        books = books.filter(b => b.category === categoryVal);
+      }
+
+      const grid = document.getElementById('catalogGrid');
+      grid.innerHTML = '';
+
+      if (books.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 4rem 0; color: var(--text-muted);">
+          No titles match your query. Try searching for something else or ask your administrator to add a book!
+        </div>`;
+        return;
+      }
+
+      books.forEach(book => {
+        const card = document.createElement('div');
+        card.className = 'book-card';
+        
+        const statusBadge = book.available_copies > 0 
+          ? `<span class="badge badge-success">Available</span>`
+          : `<span class="badge badge-danger">Out of Stock</span>`;
+
+        const borrowBtn = book.available_copies > 0
+          ? `<button onclick="handleBorrowBook(${book.id})" class="btn btn-sm">Borrow Book</button>`
+          : `<button class="btn btn-sm btn-secondary" disabled style="cursor: not-allowed; opacity: 0.5;">Out of Stock</button>`;
+
+        card.innerHTML = `
+          <div class="book-meta">
+            <span class="book-category">${escapeHtml(book.category || 'General')}</span>
+            <h3 class="book-title">${escapeHtml(book.title)}</h3>
+            <span class="book-author">by ${escapeHtml(book.author)}</span>
+          </div>
+          <div class="book-stats">
+            <span>ISBN: ${escapeHtml(book.isbn)}</span>
+            <span>${statusBadge}</span>
+          </div>
+          <div class="book-footer">
+            <span style="font-size: 0.85rem; font-weight: 500; color: var(--text-secondary);">
+              In stock: <strong>${book.available_copies} / ${book.total_copies}</strong>
+            </span>
+            ${borrowBtn}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
     }
 
-    async function handleBorrowBook(bookId) {
-      try {
-        const response = await fetch('/api/circulation/borrow', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ book_id: bookId })
-        });
-        const data = await response.json();
-
-        if (response.ok) {
-          showToast('Book borrowed successfully!', 'success');
-          loadCatalog(); // Refresh list immediately
-        } else {
-          showToast(data.error || 'Could not borrow book', 'error');
-        }
-      } catch (err) {
-        showToast('Circulation server error', 'error');
+    function handleBorrowBook(bookId) {
+      const borrowings = getLocalStorageItem('nexus_borrowings', []);
+      
+      // 1. Check borrowing limit
+      const userActiveLoans = borrowings.filter(l => l.user_id === loggedInUser.id && l.return_date === null);
+      if (userActiveLoans.length >= MAX_BORROW_LIMIT) {
+        showToast(`Borrowing limit reached (Max ${MAX_BORROW_LIMIT} books)`, 'error');
+        return;
       }
+
+      // 2. Check book availability
+      const books = getLocalStorageItem('nexus_books', []);
+      const bookIndex = books.findIndex(b => b.id === bookId);
+      if (bookIndex === -1) {
+        showToast('Book not found', 'error');
+        return;
+      }
+
+      if (books[bookIndex].available_copies <= 0) {
+        showToast('Book is currently out of stock', 'error');
+        return;
+      }
+
+      // 3. Perform borrowing action
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + BORROW_DAYS);
+
+      const newBorrowing = {
+        id: borrowings.length ? Math.max(...borrowings.map(b => b.id)) + 1 : 1,
+        user_id: loggedInUser.id,
+        book_id: bookId,
+        borrow_date: new Date().toISOString(),
+        due_date: dueDate.toISOString(),
+        return_date: null,
+        fine_amount: 0
+      };
+
+      books[bookIndex].available_copies -= 1;
+      borrowings.push(newBorrowing);
+
+      setLocalStorageItem('nexus_books', books);
+      setLocalStorageItem('nexus_borrowings', borrowings);
+
+      showToast('Book borrowed successfully!', 'success');
+      loadCatalog();
     }
 
     // MY LOANS & ACCOUNT HISTORY
-    async function loadLedgerHistory() {
-      try {
-        const response = await fetch('/api/circulation/history', {
-          headers: { 'Authorization': `Bearer ${token}` }
+    function loadLedgerHistory() {
+      const books = getLocalStorageItem('nexus_books', []);
+      const borrowings = getLocalStorageItem('nexus_borrowings', []);
+
+      const userBorrowings = borrowings.filter(l => l.user_id === loggedInUser.id);
+      
+      const joinedHistory = userBorrowings.map(b => {
+        const book = books.find(bk => bk.id === b.book_id) || { title: 'Unknown', author: 'Unknown' };
+        return {
+          borrowing_id: b.id,
+          title: book.title,
+          author: book.author,
+          borrow_date: b.borrow_date,
+          due_date: b.due_date,
+          return_date: b.return_date,
+          fine_amount: calculateFine(b)
+        };
+      });
+
+      const activeTable = document.getElementById('activeLoansTable');
+      const pastTable = document.getElementById('pastReturnedTable');
+      activeTable.innerHTML = '';
+      pastTable.innerHTML = '';
+
+      const activeLoans = joinedHistory.filter(item => item.return_date === null);
+      const pastReturned = joinedHistory.filter(item => item.return_date !== null);
+
+      // Active Loans
+      if (activeLoans.length === 0) {
+        activeTable.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No active borrowings currently recorded on your ledger.</td></tr>`;
+      } else {
+        activeLoans.forEach(item => {
+          const tr = document.createElement('tr');
+          const borrowDate = new Date(item.borrow_date).toLocaleDateString();
+          const dueDate = new Date(item.due_date);
+          const isOverdue = new Date() > dueDate;
+          
+          const dueDateText = isOverdue
+            ? `<span style="color: var(--danger); font-weight: 600;">${dueDate.toLocaleDateString()} (Overdue)</span>`
+            : `<span>${dueDate.toLocaleDateString()}</span>`;
+
+          const fineVal = item.fine_amount || 0;
+          const fineText = fineVal > 0 
+            ? `<span style="color: var(--danger); font-weight: 600;">$${fineVal.toFixed(2)}</span>`
+            : `<span style="color: var(--success);">$0.00</span>`;
+
+          tr.innerHTML = `
+            <td><strong>${escapeHtml(item.title)}</strong></td>
+            <td>${escapeHtml(item.author)}</td>
+            <td>${borrowDate}</td>
+            <td>${dueDateText}</td>
+            <td>${fineText}</td>
+            <td style="text-align: right;">
+              <button onclick="handleReturnBook(${item.borrowing_id})" class="btn btn-sm btn-secondary" style="border-color: rgba(16, 185, 129, 0.4); color: var(--success);">Return Book</button>
+            </td>
+          `;
+          activeTable.appendChild(tr);
         });
-        const data = await response.json();
+      }
 
-        const activeTable = document.getElementById('activeLoansTable');
-        const pastTable = document.getElementById('pastReturnedTable');
-        activeTable.innerHTML = '';
-        pastTable.innerHTML = '';
+      // Past Returned
+      if (pastReturned.length === 0) {
+        pastTable.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No past returned books records found.</td></tr>`;
+      } else {
+        pastReturned.forEach(item => {
+          const tr = document.createElement('tr');
+          const borrowDate = new Date(item.borrow_date).toLocaleDateString();
+          const returnDate = new Date(item.return_date).toLocaleDateString();
+          
+          const fineVal = item.fine_amount || 0;
+          const fineText = fineVal > 0 
+            ? `<span style="color: var(--warning);">$${fineVal.toFixed(2)}</span>`
+            : `<span>$0.00</span>`;
 
-        const activeLoans = data.filter(item => item.return_date === null);
-        const pastReturned = data.filter(item => item.return_date !== null);
-
-        // Active Loans
-        if (activeLoans.length === 0) {
-          activeTable.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No active borrowings currently recorded on your ledger.</td></tr>`;
-        } else {
-          activeLoans.forEach(item => {
-            const tr = document.createElement('tr');
-            const borrowDate = new Date(item.borrow_date).toLocaleDateString();
-            const dueDate = new Date(item.due_date);
-            const isOverdue = new Date() > dueDate;
-            
-            const dueDateText = isOverdue
-              ? `<span style="color: var(--danger); font-weight: 600;">${dueDate.toLocaleDateString()} (Overdue)</span>`
-              : `<span>${dueDate.toLocaleDateString()}</span>`;
-
-            const fineVal = item.fine_amount || 0;
-            const fineText = fineVal > 0 
-              ? `<span style="color: var(--danger); font-weight: 600;">$${fineVal.toFixed(2)}</span>`
-              : `<span style="color: var(--success);">$0.00</span>`;
-
-            tr.innerHTML = `
-              <td><strong>${escapeHtml(item.title)}</strong></td>
-              <td>${escapeHtml(item.author)}</td>
-              <td>${borrowDate}</td>
-              <td>${dueDateText}</td>
-              <td>${fineText}</td>
-              <td style="text-align: right;">
-                <button onclick="handleReturnBook(${item.borrowing_id})" class="btn btn-sm btn-secondary" style="border-color: rgba(16, 185, 129, 0.4); color: var(--success);">Return Book</button>
-              </td>
-            `;
-            activeTable.appendChild(tr);
-          });
-        }
-
-        // Past Returned
-        if (pastReturned.length === 0) {
-          pastTable.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No past returned books records found.</td></tr>`;
-        } else {
-          pastReturned.forEach(item => {
-            const tr = document.createElement('tr');
-            const borrowDate = new Date(item.borrow_date).toLocaleDateString();
-            const returnDate = new Date(item.return_date).toLocaleDateString();
-            
-            const fineVal = item.fine_amount || 0;
-            const fineText = fineVal > 0 
-              ? `<span style="color: var(--warning);">$${fineVal.toFixed(2)}</span>`
-              : `<span>$0.00</span>`;
-
-            tr.innerHTML = `
-              <td><strong>${escapeHtml(item.title)}</strong></td>
-              <td>${escapeHtml(item.author)}</td>
-              <td>${borrowDate}</td>
-              <td>${returnDate}</td>
-              <td>${fineText}</td>
-              <td><span class="badge badge-success">Returned</span></td>
-            `;
-            pastTable.appendChild(tr);
-          });
-        }
-      } catch (err) {
-        showToast('Error loading circulation ledger', 'error');
+          tr.innerHTML = `
+            <td><strong>${escapeHtml(item.title)}</strong></td>
+            <td>${escapeHtml(item.author)}</td>
+            <td>${borrowDate}</td>
+            <td>${returnDate}</td>
+            <td>${fineText}</td>
+            <td><span class="badge badge-success">Returned</span></td>
+          `;
+          pastTable.appendChild(tr);
+        });
       }
     }
 
-    async function handleReturnBook(borrowingId) {
-      try {
-        const response = await fetch('/api/circulation/return', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ borrowing_id: borrowingId })
-        });
-        const data = await response.json();
+    function handleReturnBook(borrowingId) {
+      const borrowings = getLocalStorageItem('nexus_borrowings', []);
+      const bIndex = borrowings.findIndex(b => b.id === borrowingId && b.user_id === loggedInUser.id);
 
-        if (response.ok) {
-          if (data.fine_amount > 0) {
-            showToast(`Book returned. Late fine incurred: $${data.fine_amount.toFixed(2)}`, 'warning');
-          } else {
-            showToast('Book returned on time! Thank you.', 'success');
-          }
-          loadLedgerHistory(); // Refresh history tab
-        } else {
-          showToast(data.error || 'Could not return book', 'error');
-        }
-      } catch (err) {
-        showToast('Returned validation failed', 'error');
+      if (bIndex === -1) {
+        showToast('Active borrowing record not found', 'error');
+        return;
       }
+
+      const borrowing = borrowings[bIndex];
+      const returnDate = new Date();
+      const dueDate = new Date(borrowing.due_date);
+
+      let fineAmount = 0;
+      if (returnDate > dueDate) {
+        const diffTime = Math.abs(returnDate - dueDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        fineAmount = diffDays * FINE_RATE_PER_DAY;
+      }
+
+      borrowing.return_date = returnDate.toISOString();
+      borrowing.fine_amount = fineAmount;
+
+      const books = getLocalStorageItem('nexus_books', []);
+      const bookIndex = books.findIndex(bk => bk.id === borrowing.book_id);
+      if (bookIndex !== -1) {
+        books[bookIndex].available_copies += 1;
+        setLocalStorageItem('nexus_books', books);
+      }
+
+      borrowings[bIndex] = borrowing;
+      setLocalStorageItem('nexus_borrowings', borrowings);
+
+      if (fineAmount > 0) {
+        showToast(`Book returned. Late fine incurred: $${fineAmount.toFixed(2)}`, 'warning');
+      } else {
+        showToast('Book returned on time! Thank you.', 'success');
+      }
+      loadLedgerHistory();
     }
 
-    async function directReturn(borrowingId) {
-      await handleReturnBook(borrowingId);
-      loadDashboardStats(); // Refresh dashboard list
+    function directReturn(borrowingId) {
+      handleReturnBook(borrowingId);
+      loadDashboardStats();
     }
 
     // ADMIN INVENTORY MANAGEMENT
-    async function loadAdminInventory() {
-      try {
-        const response = await fetch('/api/books', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const books = await response.json();
+    function loadAdminInventory() {
+      const books = getLocalStorageItem('nexus_books', []);
 
-        const tableBody = document.getElementById('adminInventoryTable');
-        tableBody.innerHTML = '';
+      const tableBody = document.getElementById('adminInventoryTable');
+      tableBody.innerHTML = '';
 
-        if (books.length === 0) {
-          tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No inventory records. Create a book on the right!</td></tr>`;
-          return;
-        }
-
-        books.forEach(book => {
-          const tr = document.createElement('tr');
-          
-          tr.innerHTML = `
-            <td>
-              <div style="font-weight: 600; color: white;">${escapeHtml(book.title)}</div>
-              <div style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(book.author)}</div>
-            </td>
-            <td><code>${escapeHtml(book.isbn)}</code></td>
-            <td><span class="badge badge-info">${escapeHtml(book.category)}</span></td>
-            <td><strong>${book.available_copies}</strong> / ${book.total_copies}</td>
-            <td style="text-align: right; white-space: nowrap;">
-              <button onclick="editBookInForm(${JSON.stringify(book).replace(/"/g, '&quot;')})" class="btn btn-sm btn-secondary" style="margin-right: 0.5rem; border-color: rgba(99, 102, 241, 0.3); color: var(--primary);">Edit</button>
-              <button onclick="handleDeleteBook(${book.id})" class="btn btn-sm btn-outline-danger">Delete</button>
-            </td>
-          `;
-          tableBody.appendChild(tr);
-        });
-      } catch (err) {
-        showToast('Error fetching inventory catalog', 'error');
+      if (books.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No inventory records. Create a book on the right!</td></tr>`;
+        return;
       }
+
+      books.forEach(book => {
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+          <td>
+            <div style="font-weight: 600; color: white;">${escapeHtml(book.title)}</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(book.author)}</div>
+          </td>
+          <td><code>${escapeHtml(book.isbn)}</code></td>
+          <td><span class="badge badge-info">${escapeHtml(book.category)}</span></td>
+          <td><strong>${book.available_copies}</strong> / ${book.total_copies}</td>
+          <td style="text-align: right; white-space: nowrap;">
+            <button onclick='editBookInForm(${JSON.stringify(book)})' class="btn btn-sm btn-secondary" style="margin-right: 0.5rem; border-color: rgba(99, 102, 241, 0.3); color: var(--primary);">Edit</button>
+            <button onclick="handleDeleteBook(${book.id})" class="btn btn-sm btn-outline-danger">Delete</button>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+      });
     }
 
-    async function handleBookSubmit(event) {
+    function handleBookSubmit(event) {
       event.preventDefault();
       
       const id = document.getElementById('adminBookId').value;
@@ -851,54 +998,61 @@
         return;
       }
 
-      const body = { title, author, isbn, category, total_copies };
-      const isEdit = id !== '';
+      const books = getLocalStorageItem('nexus_books', []);
 
-      const url = isEdit ? `/api/books/${id}` : '/api/books';
-      const method = isEdit ? 'PUT' : 'POST';
+      if (id !== '') {
+        // Edit Mode
+        const bookId = parseInt(id);
+        const bookIndex = books.findIndex(b => b.id === bookId);
+        if (bookIndex !== -1) {
+          const book = books[bookIndex];
+          const copiesDifference = total_copies - book.total_copies;
+          book.title = title;
+          book.author = author;
+          book.isbn = isbn;
+          book.category = category;
+          book.total_copies = total_copies;
+          book.available_copies = Math.max(0, book.available_copies + copiesDifference);
 
-      try {
-        const response = await fetch(url, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(body)
-        });
-        const data = await response.json();
-
-        if (response.ok) {
-          showToast(isEdit ? 'Book settings updated' : 'Book added to catalog', 'success');
-          resetAdminForm();
-          loadAdminInventory();
-        } else {
-          showToast(data.error || 'Save operation failed', 'error');
+          books[bookIndex] = book;
+          setLocalStorageItem('nexus_books', books);
+          showToast('Book settings updated', 'success');
         }
-      } catch (err) {
-        showToast('Server update transaction error', 'error');
+      } else {
+        // Add Mode
+        if (books.some(b => b.isbn === isbn)) {
+          showToast('A book with this ISBN already exists', 'error');
+          return;
+        }
+
+        const newBook = {
+          id: books.length ? Math.max(...books.map(b => b.id)) + 1 : 1,
+          title,
+          author,
+          isbn,
+          category,
+          total_copies,
+          available_copies: total_copies
+        };
+
+        books.push(newBook);
+        setLocalStorageItem('nexus_books', books);
+        showToast('Book added to catalog', 'success');
       }
+
+      resetAdminForm();
+      loadAdminInventory();
     }
 
-    async function handleDeleteBook(id) {
+    function handleDeleteBook(id) {
       if (!confirm('Are you absolutely sure you want to delete this volume from the catalog?')) return;
 
-      try {
-        const response = await fetch(`/api/books/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await response.json();
+      const books = getLocalStorageItem('nexus_books', []);
+      const filteredBooks = books.filter(b => b.id !== id);
 
-        if (response.ok) {
-          showToast('Book deleted from inventory', 'success');
-          loadAdminInventory();
-        } else {
-          showToast(data.error || 'Delete validation failed', 'error');
-        }
-      } catch (err) {
-        showToast('Inventory delete request error', 'error');
-      }
+      setLocalStorageItem('nexus_books', filteredBooks);
+      showToast('Book deleted from inventory', 'success');
+      loadAdminInventory();
     }
 
     // Edit binder
